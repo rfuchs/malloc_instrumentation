@@ -32,14 +32,18 @@
 
 #define OUTPUT_PREFIX "|||||||||||||||||||||| "
 
-static void* (*real_malloc)(size_t size);
-static void* (*real_calloc)(size_t nmemb, size_t size);
+void* dummy_malloc(size_t size);
+void* dummy_calloc(size_t nmemb, size_t size);
+void dummy_free(void *ptr);
+
+static void* (*real_malloc)(size_t size) = dummy_malloc;
+static void* (*real_calloc)(size_t nmemb, size_t size) = dummy_calloc;
 static void* (*real_realloc)(void *ptr, size_t size);
 static void* (*real_memalign)(size_t blocksize, size_t bytes);
 static void* (*real_valloc)(size_t size);
 static int   (*real_posix_memalign)(void** memptr, size_t alignment,
                                      size_t size);
-static void  (*real_free)(void *ptr);
+static void  (*real_free)(void *ptr) = dummy_free;
 
 static void* (*temp_malloc)(size_t size);
 static void* (*temp_calloc)(size_t nmemb, size_t size);
@@ -114,6 +118,10 @@ void __attribute__((constructor)) hookfns() {
         exit(1);
     }
 
+    if (getenv("DUMP_WHOLE_STACK")) {
+        dump_whole_stack = 1;
+    }
+
     real_malloc         = temp_malloc;
     real_calloc         = temp_calloc;
     real_realloc        = temp_realloc;
@@ -121,10 +129,6 @@ void __attribute__((constructor)) hookfns() {
     real_memalign       = temp_memalign;
     real_valloc         = temp_valloc;
     real_posix_memalign = temp_posix_memalign;
-
-    if (getenv("DUMP_WHOLE_STACK")) {
-        dump_whole_stack = 1;
-    }
 
     end_call();
 }
@@ -209,6 +213,9 @@ void do_call(call_record *record) {
     internal = start_call();
 
     if (!internal) {
+        if (real_malloc == dummy_malloc)
+            hookfns();
+
         if (dump_whole_stack) {
             backtracelen += 20;
         }
