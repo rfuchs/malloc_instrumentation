@@ -42,6 +42,7 @@ def process(stream):
     free_re = re.compile(r'^\[[^]]+\]: (.+)\(.+: free\((.*)\)\n$')
     realloc_re = re.compile(r'^\[[^]]+\]: (.+)\(.+: realloc\(([^,]*), ([0-9]+)\) = (.*)\n$')
     calloc_re = re.compile(r'^\[[^]]+\]: (.+)\(.+: calloc\(([0-9]+), ([0-9]+)\) = (.*)\n$')
+    posix_memalign_re = re.compile(r'^\[[^]]+\]: (.+)\(.+: posix_memalign\((.*), ([0-9]+), ([0-9]+)\) = ([^,]*), ([^,]*)$')
 
     lines = 0
     exited = False
@@ -110,6 +111,15 @@ def process(stream):
             caller = match.group(1)
             size = int(match.group(2)) * int(match.group(3))
             address = match.group(4)
+            current_total += size
+            modules[caller] += size;
+            allocations[address] = Allocation(size, caller)
+            continue
+        match = posix_memalign_re.match(line)
+        if match:
+            caller = match.group(1)
+            size = int(match.group(4))
+            address = match.group(6)
             current_total += size
             modules[caller] += size;
             allocations[address] = Allocation(size, caller)
