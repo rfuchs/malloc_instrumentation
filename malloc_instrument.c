@@ -369,7 +369,7 @@ void* memalign(size_t blocksize, size_t bytes) {
 
 int posix_memalign(void** memptr, size_t alignment, size_t size) {
     call_record record;
-    record.type = MEMALIGN_CALL;
+    record.type = POSIX_MEMALIGN_CALL;
     record.posix_memalign_call.memptr = memptr;
     record.posix_memalign_call.alignment = alignment;
     record.posix_memalign_call.size = size;
