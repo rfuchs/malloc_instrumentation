@@ -9,7 +9,7 @@ __author__ = "JT Olds <jt@spacemonkey.com>"
 
 import re
 import sys
-import Queue
+import queue as Queue
 import threading
 from collections import defaultdict
 
@@ -62,12 +62,12 @@ def process(stream):
             if line is not None:
                 sys.stdout.write(line)
             module_diffs = defaultdict(lambda: 0)
-            for k, v in modules.iteritems():
+            for k, v in iter(modules.items()):
                 diff = v - module_snapshot[k]
                 if diff != 0:
                     module_diffs[k] = diff
             module_snapshot = modules.copy()
-            for k, v in module_diffs.iteritems():
+            for k, v in iter(module_diffs.items()):
                 sys.stdout.write("-- diff %s: %d bytes\n" % (k, v))
             continue
         line = line[len(OUTPUT_PREFIX):]
@@ -117,7 +117,7 @@ def process(stream):
         sys.stdout.write("unhandled malloc line: %s\n" % line)
     sys.stdout.write("-- allocated at exit: %d bytes\n" % current_total)
     modules = defaultdict(lambda: 0)
-    for k, v in allocations.iteritems():
+    for k, v in iter(allocations.items()):
         sys.stdout.write("unfreed %s (%s): %d bytes\n" % (k, v.module, v.size))
         modules[v.module] += v.size
     for k, v in modules.iteritems():
